@@ -1,4 +1,4 @@
 new-device
 
 
-#{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("signature", messageToken), ("user", messageUser)]}
+#{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("token_signature", messageToken), ("user", messageUser)]}
