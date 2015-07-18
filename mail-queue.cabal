@@ -30,6 +30,8 @@ executable mail-queue
                      , time
                      , safe
                      , text
+                     , random
+                     , atomic-write
 
   hs-source-dirs:      src
   default-language:    Haskell2010

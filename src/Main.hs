@@ -1,11 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
--- This module selects the email_queue table every 500ms and sends all
--- the emails that still need sending.
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE DeriveGeneric #-}
+
+-- This module selects the email_queue table every N milliseconds and
+-- sends all the emails that still need sending.
 
 -- TODO
 -- * use graceful package
 
 import           Control.Concurrent (threadDelay)
+import           Control.Exception (try, catch, SomeException)
 import           Control.Monad (forever)
 import           Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -14,6 +18,7 @@ import qualified Database.PostgreSQL.Simple as S
 import qualified Network.Mail.Mime as M
 import           Network.Mail.SMTP (sendMail)
 import           Safe (readMay)
+import           System.Random (getStdGen)
 
 data EmailType = INVITE
                | VERIFY_ADDRESS
@@ -88,23 +93,45 @@ renderOne row = do
     dec <- decodeMessage msg
     return $ renderMail dec
 
+sendOne :: IO M.Mail -> IO Bool
+sendOne m = do
+    mail <- m
+    r <- try (sendMail "127.0.0.1" mail)
+    case r of
+     Left (e :: SomeException) -> do
+         print ("Could not send mail: " ++ (show e))
+         return False
+     Right _ -> return True
+
 waitForEmail :: IO ()
-waitForEmail = forever $ do
+waitForEmail = do
     conn <- S.connectPostgreSQL "host=127.0.0.1 dbname='mitro'"
     rows <- S.query_ conn "select id, type_string, arg_string from email_queue" :: IO [(Int, String, Maybe String)]
 
+    -- only need to create this table once but doing it lazily anyway:
+    _ <- catch (S.execute_ conn "create table email_queue_sent as select * from  email_queue limit 0")
+         (\(e :: S.SqlError) -> return 0)
+
     let mails = map renderOne rows
 
-    mapM (\d -> case d of
+    -- renderMail returns (IO Message) because it needs randomness for
+    -- generating message boundaries.
+    mapM (\((id, _, _), d) -> case d of
                  Left err -> print err
-                 Right m -> m >>= M.renderMail' >>= print
-         ) mails
-    -- TODO how to make sure emails are sent at most once with high
-    -- confidence?
+                 Right m -> do
+                            ok <- sendOne m
+                            print ("Email attempt for id: " ++ (show id) ++ " status: " ++ (show ok))
+                            case ok of
+                             True -> S.withTransaction conn $ do
+                                 _ <- S.execute conn "insert into email_queue_sent select * from email_queue where id = ?" (S.Only id)
+                                 _ <- S.execute conn "delete from email_queue where id = ?" (S.Only id)
+                                 return ()
+                             False -> return ()
+
+         ) (zip rows mails)
+           -- TODO fmap?
 
     threadDelay (1 * 1000 * 1000)
 
 main :: IO ()
-main = do
-    waitForEmail
-    -- sendMail "127.0.0.1" m
+main = forever waitForEmail
