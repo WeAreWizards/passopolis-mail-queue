@@ -1,5 +1,5 @@
-{ mkDerivation, aeson, atomic-write, base, bytestring, graceful
-, mime-mail, postgresql-simple, random, safe, smtp-mail, stdenv
+{ mkDerivation, aeson, base, bytestring, graceful, mime-mail
+, postgresql-simple, random, safe, shakespeare, smtp-mail, stdenv
 , text, time
 }:
 mkDerivation {
@@ -9,8 +9,8 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   buildDepends = [
-    aeson atomic-write base bytestring graceful mime-mail
-    postgresql-simple random safe smtp-mail text time
+    aeson base bytestring graceful mime-mail postgresql-simple random
+    safe shakespeare smtp-mail text time
   ];
   license = stdenv.lib.licenses.gpl3;
 }

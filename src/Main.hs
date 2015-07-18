@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- This module selects the email_queue table every N milliseconds and
 -- sends all the emails that still need sending.
@@ -18,7 +21,11 @@ import qualified Database.PostgreSQL.Simple as S
 import qualified Network.Mail.Mime as M
 import           Network.Mail.SMTP (sendMail)
 import           Safe (readMay)
-import           System.Random (getStdGen)
+import           Text.Blaze.Html.Renderer.Text (renderHtml)
+import           Text.Hamlet (shamletFile)
+
+serverBase :: T.Text
+serverBase = "https://passopolis.com"
 
 data EmailType = INVITE
                | VERIFY_ADDRESS
@@ -29,7 +36,7 @@ data EmailType = INVITE
                deriving Show
 
 data Message = Invite { messageTo :: M.Address }
-             | VerifyAddress { messageTo :: M.Address, messageToken :: String }
+             | VerifyAddress { messageTo :: M.Address, messageToken :: String, messageUser :: String }
              | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String}
              | IssueReported { messageTo :: M.Address }
              | OnboardFirstSecret { messageTo :: M.Address }
@@ -44,21 +51,40 @@ instance Read EmailType where
     readsPrec _ r = [(ERROR r, r)]
 
 renderMail :: Message -> IO M.Mail
-renderMail (VerifyAddress to token)  =
-    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
-    "verify" "" "" []
-renderMail (OnboardFirstSecret to)  =
-    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
-    "onboard" "" "" []
-renderMail (NewDevice to args token)  =
-    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
-    "new-device" "" "" []
-renderMail (Invite to)  =
-    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
-    "invite" "" "" []
-renderMail (IssueReported to)  =
-    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
-    "invite" "" "" []
+renderMail (VerifyAddress {..})  =
+    M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
+    "Please verify your address"
+    (renderHtml $(shamletFile "./templates/verify-address.txt"))
+    (renderHtml $(shamletFile "./templates/verify-address.html"))
+    []
+
+renderMail (OnboardFirstSecret {..})  =
+    M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
+    "Add your first secret."
+    (renderHtml $(shamletFile "./templates/onboard-first-secret.txt"))
+    (renderHtml $(shamletFile "./templates/onboard-first-secret.html"))
+    []
+
+renderMail (NewDevice {..})  =
+    M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
+    "Please confirm a new device."
+    (renderHtml $(shamletFile "./templates/new-device.txt"))
+    (renderHtml $(shamletFile "./templates/new-device.html"))
+    []
+
+renderMail (Invite {..})  =
+    M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
+    "You've been invited to a secret on Passopolis."
+    (renderHtml $(shamletFile "./templates/invite.txt"))
+    (renderHtml $(shamletFile "./templates/invite.html"))
+    []
+
+renderMail (IssueReported {..})  =
+    M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
+    "Thanks for reporting an issue."
+    "TODO"
+    "TODO"
+    []
 
 parseMsg :: (Int, String, Maybe String) -> Either String (EmailType, [Maybe String])
 parseMsg (_, type_, args) =
@@ -74,7 +100,7 @@ parseMsg (_, type_, args) =
 
 decodeMessage :: (EmailType, [Maybe String]) -> Either String Message
 decodeMessage (VERIFY_ADDRESS, [Just address, Just token]) =
-    Right (VerifyAddress (M.Address Nothing (T.pack address)) token)
+    Right (VerifyAddress (M.Address Nothing (T.pack address)) token address)
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
@@ -116,15 +142,15 @@ waitForEmail = do
 
     -- renderMail returns (IO Message) because it needs randomness for
     -- generating message boundaries.
-    mapM (\((id, _, _), d) -> case d of
+    mapM_ (\((rowId, _, _), d) -> case d of
                  Left err -> print err
                  Right m -> do
                             ok <- sendOne m
-                            print ("Email attempt for id: " ++ (show id) ++ " status: " ++ (show ok))
+                            print ("Email attempt for id: " ++ (show rowId) ++ " status: " ++ (show ok))
                             case ok of
                              True -> S.withTransaction conn $ do
-                                 _ <- S.execute conn "insert into email_queue_sent select * from email_queue where id = ?" (S.Only id)
-                                 _ <- S.execute conn "delete from email_queue where id = ?" (S.Only id)
+                                 _ <- S.execute conn "insert into email_queue_sent select * from email_queue where id = ?" (S.Only rowId)
+                                 _ <- S.execute conn "delete from email_queue where id = ?" (S.Only rowId)
                                  return ()
                              False -> return ()
 
@@ -134,4 +160,5 @@ waitForEmail = do
     threadDelay (1 * 1000 * 1000)
 
 main :: IO ()
-main = forever waitForEmail
+main = do
+    forever waitForEmail

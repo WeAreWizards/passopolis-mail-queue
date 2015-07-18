@@ -1,0 +1,3 @@
+VERIFY
+
+#{serverBase}/mitro-core/user/VerifyAccount?code=#{messageToken}&user=#{messageUser}

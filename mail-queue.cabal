@@ -28,10 +28,11 @@ executable mail-queue
                      , graceful
                      , aeson
                      , time
-                     , safe
                      , text
+                     , safe
                      , random
-                     , atomic-write
+                     , shakespeare
+                     , blaze-html
 
   hs-source-dirs:      src
   default-language:    Haskell2010
