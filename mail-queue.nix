@@ -1,6 +1,6 @@
-{ mkDerivation, aeson, base, bytestring, graceful, mime-mail
-, postgresql-simple, random, safe, shakespeare, smtp-mail, stdenv
-, text, time
+{ mkDerivation, aeson, base, blaze-html, bytestring, graceful, HTTP
+, mime-mail, postgresql-simple, random, safe, shakespeare
+, smtp-mail, stdenv, text, time
 }:
 mkDerivation {
   pname = "mail-queue";
@@ -9,8 +9,8 @@ mkDerivation {
   isLibrary = false;
   isExecutable = true;
   buildDepends = [
-    aeson base bytestring graceful mime-mail postgresql-simple random
-    safe shakespeare smtp-mail text time
+    aeson base blaze-html bytestring graceful HTTP mime-mail
+    postgresql-simple random safe shakespeare smtp-mail text time
   ];
   license = stdenv.lib.licenses.gpl3;
 }

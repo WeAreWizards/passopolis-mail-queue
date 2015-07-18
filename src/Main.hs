@@ -18,6 +18,7 @@ import           Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text as T
 import qualified Database.PostgreSQL.Simple as S
+import           Network.HTTP.Base (urlEncodeVars)
 import qualified Network.Mail.Mime as M
 import           Network.Mail.SMTP (sendMail)
 import           Safe (readMay)
@@ -37,7 +38,7 @@ data EmailType = INVITE
 
 data Message = Invite { messageTo :: M.Address }
              | VerifyAddress { messageTo :: M.Address, messageToken :: String, messageUser :: String }
-             | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String}
+             | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String, messageUser :: String}
              | IssueReported { messageTo :: M.Address }
              | OnboardFirstSecret { messageTo :: M.Address }
              deriving Show
@@ -102,7 +103,7 @@ decodeMessage :: (EmailType, [Maybe String]) -> Either String Message
 decodeMessage (VERIFY_ADDRESS, [Just address, Just token]) =
     Right (VerifyAddress (M.Address Nothing (T.pack address)) token address)
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
-    Right (NewDevice (M.Address Nothing (T.pack address)) args token)
+    Right (NewDevice (M.Address Nothing (T.pack address)) args token address)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
     Right (OnboardFirstSecret (M.Address Nothing (T.pack address)))
 decodeMessage (INVITE, [Just address]) =
@@ -123,6 +124,7 @@ sendOne :: IO M.Mail -> IO Bool
 sendOne m = do
     mail <- m
     r <- try (sendMail "127.0.0.1" mail)
+
     case r of
      Left (e :: SomeException) -> do
          print ("Could not send mail: " ++ (show e))
