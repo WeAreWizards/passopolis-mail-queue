@@ -136,9 +136,9 @@ waitForEmail = do
     conn <- S.connectPostgreSQL "host=127.0.0.1 dbname='mitro'"
     rows <- S.query_ conn "select id, type_string, arg_string from email_queue" :: IO [(Int, String, Maybe String)]
 
-    -- only need to create this table once but doing it lazily anyway:
-    _ <- catch (S.execute_ conn "create table email_queue_sent as select * from  email_queue limit 0")
-         (\(e :: S.SqlError) -> return 0)
+    -- Run this query to make sure we can access email_queue_sent -
+    -- has caused permission bugs in the past.
+    _ <- S.query_ conn "select id from email_queue_sent" :: IO [S.Only Int]
 
     let mails = map renderOne rows
 
