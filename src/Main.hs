@@ -6,11 +6,10 @@
 -- * use graceful package
 
 import           Control.Concurrent (threadDelay)
-import           Control.Monad (forever, mapM)
+import           Control.Monad (forever)
 import           Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Text as T
-import           Data.Time.Clock (UTCTime)
 import qualified Database.PostgreSQL.Simple as S
 import qualified Network.Mail.Mime as M
 import           Network.Mail.SMTP (sendMail)
@@ -24,11 +23,11 @@ data EmailType = INVITE
                | ERROR String
                deriving Show
 
-data Message = Invite { messageAddress :: M.Address }
-             | VerifyAddress { messageAddress :: M.Address, messageToken :: String }
-             | NewDevice { messageAddress :: M.Address, messageExtra :: String, messageToken :: String}
-             | IssueReported
-             | OnboardFirstSecret { messageAddress :: M.Address }
+data Message = Invite { messageTo :: M.Address }
+             | VerifyAddress { messageTo :: M.Address, messageToken :: String }
+             | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String}
+             | IssueReported { messageTo :: M.Address }
+             | OnboardFirstSecret { messageTo :: M.Address }
              deriving Show
 
 instance Read EmailType where
@@ -49,6 +48,12 @@ renderMail (OnboardFirstSecret to)  =
 renderMail (NewDevice to args token)  =
     M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
     "new-device" "" "" []
+renderMail (Invite to)  =
+    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
+    "invite" "" "" []
+renderMail (IssueReported to)  =
+    M.simpleMail to (M.Address (Just "Passopolis") "team@passopolis.com")
+    "invite" "" "" []
 
 parseMsg :: (Int, String, Maybe String) -> Either String (EmailType, [Maybe String])
 parseMsg (_, type_, args) =
@@ -65,12 +70,17 @@ parseMsg (_, type_, args) =
 decodeMessage :: (EmailType, [Maybe String]) -> Either String Message
 decodeMessage (VERIFY_ADDRESS, [Just address, Just token]) =
     Right (VerifyAddress (M.Address Nothing (T.pack address)) token)
-decodeMessage (VERIFY_ADDRESS, _) =
-    Left "wrong args"
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
     Right (OnboardFirstSecret (M.Address Nothing (T.pack address)))
+decodeMessage (INVITE, [Just address]) =
+    Right (Invite (M.Address Nothing (T.pack address)))
+decodeMessage (ISSUE_REPORTED, [Just address]) =
+    Right (IssueReported (M.Address Nothing (T.pack address)))
+decodeMessage (ERROR _, _) = undefined
+decodeMessage (tp, args) =
+    Left ("wrong args for" ++ (show tp) ++ " args: " ++  (show args))
 
 renderOne :: (Int, String, Maybe String) -> Either String (IO M.Mail)
 renderOne row = do
@@ -94,6 +104,7 @@ waitForEmail = forever $ do
 
     threadDelay (1 * 1000 * 1000)
 
+main :: IO ()
 main = do
     waitForEmail
     -- sendMail "127.0.0.1" m
