@@ -36,7 +36,7 @@ data EmailType = INVITE
                | ERROR String
                deriving Show
 
-data Message = Invite { messageTo :: M.Address }
+data Message = Invite { messageTo :: M.Address, messageFrom :: String, messageUser :: String, token :: String }
              | VerifyAddress { messageTo :: M.Address, messageToken :: String, messageUser :: String }
              | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String, messageUser :: String}
              | IssueReported { messageTo :: M.Address }
@@ -106,8 +106,8 @@ decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token address)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
     Right (OnboardFirstSecret (M.Address Nothing (T.pack address)))
-decodeMessage (INVITE, [Just address]) =
-    Right (Invite (M.Address Nothing (T.pack address)))
+decodeMessage (INVITE, [Just fromAdress, Just toAddress, Just token]) =
+    Right (Invite (M.Address Nothing (T.pack fromAdress)) toAddress fromAdress token)
 decodeMessage (ISSUE_REPORTED, [Just address]) =
     Right (IssueReported (M.Address Nothing (T.pack address)))
 decodeMessage (ERROR _, _) = undefined
