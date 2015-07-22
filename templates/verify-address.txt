@@ -1,3 +1,12 @@
-VERIFY
+Hi there,
+
+Thanks for signing up to Passopolis!
+
+To be extra safe we'd like you to confirm your address by clicking the following link:
 
 #{serverBase}/mitro-core/user/VerifyAccount?#{urlEncodeVars [("user", messageUser), ("code", messageToken)]}
+
+If you didn't sign up for Passopolis please ignore this email.
+
+All the best & stay safe,
+Team Passopolis

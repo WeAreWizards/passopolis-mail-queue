@@ -1,4 +1,10 @@
-new-device
+Hi there,
 
+A new device contacted us. For additional safety we'd like you to confirm that this device really belongs to you by clicking the following link:
 
 #{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("token_signature", messageToken), ("user", messageUser)]}
+
+Please ignore this message if you didn't use any new devices recently.
+
+All the best & stay safe,
+Team Passopolis

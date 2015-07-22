@@ -3,6 +3,15 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Invite for Passopolis
+    <title>Please confirm a new device
   <body>
-    #{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("token_signature", messageToken), ("user", messageUser)]}
+    <p>Hi there,
+
+    <p>A new device contacted us. For additional safety we'd like you to confirm that this device really belongs to you by clicking the following link:
+
+    <p>#{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("token_signature", messageToken), ("user", messageUser)]}
+
+    <p>Please ignore this message if you didn't use any new devices recently.
+
+    <p>All the best & stay safe,
+    <p>Team Passopolis

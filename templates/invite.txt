@@ -1,4 +1,10 @@
-Hello,
+Hi there,
 
-You've been invited to join passopolis.com, a secret sharing
-application.
+You've been invited to join Passopolis, a secret sharing application.
+
+You can install the extension by going to #{serverBase}/install.html
+
+We hope you'll enjoy the app!
+
+All the best & stay safe,
+Team Passopolis
