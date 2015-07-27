@@ -1,8 +1,8 @@
 Hi there,
 
-You've been invited to join Passopolis, a secret sharing application.
+You've been invited to join Passopolis, a secret sharing application. You can install the extension by going to #{serverBase}/install.html
 
-You can install the extension by going to #{serverBase}/install.html
+Your temporary password is "#{token}".
 
 We hope you'll enjoy the app!
 
