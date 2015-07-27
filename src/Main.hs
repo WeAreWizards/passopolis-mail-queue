@@ -54,28 +54,28 @@ instance Read EmailType where
 renderMail :: Message -> IO M.Mail
 renderMail (VerifyAddress {..})  =
     M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
-    "Please verify your address"
+    "Please verify your address for Passopolis"
     (renderHtml $(shamletFile "./templates/verify-address.txt"))
     (renderHtml $(shamletFile "./templates/verify-address.html"))
     []
 
 renderMail (OnboardFirstSecret {..})  =
     M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
-    "Add your first secret."
+    "Passopolis recorded your first secret"
     (renderHtml $(shamletFile "./templates/onboard-first-secret.txt"))
     (renderHtml $(shamletFile "./templates/onboard-first-secret.html"))
     []
 
 renderMail (NewDevice {..})  =
     M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
-    "Please confirm a new device."
+    "Please confirm a new device for Passopolis"
     (renderHtml $(shamletFile "./templates/new-device.txt"))
     (renderHtml $(shamletFile "./templates/new-device.html"))
     []
 
 renderMail (Invite {..})  =
     M.simpleMail messageTo (M.Address (Just "Passopolis") "team@passopolis.com")
-    "You've been invited to a secret on Passopolis."
+    "You've been invited to a secret on Passopolis"
     (renderHtml $(shamletFile "./templates/invite.txt"))
     (renderHtml $(shamletFile "./templates/invite.html"))
     []
