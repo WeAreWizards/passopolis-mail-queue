@@ -106,8 +106,8 @@ decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token address)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
     Right (OnboardFirstSecret (M.Address Nothing (T.pack address)))
-decodeMessage (INVITE, [Just fromAdress, Just toAddress, Just token]) =
-    Right (Invite (M.Address Nothing (T.pack fromAdress)) toAddress fromAdress token)
+decodeMessage (INVITE, [Just fromAddress, Just toAddress, Just token]) =
+    Right (Invite (M.Address Nothing (T.pack toAddress)) fromAddress toAddress token)
 decodeMessage (ISSUE_REPORTED, [Just address]) =
     Right (IssueReported (M.Address Nothing (T.pack address)))
 decodeMessage (ERROR _, _) = undefined
