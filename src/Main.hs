@@ -12,7 +12,7 @@
 -- * use graceful package
 
 import           Control.Concurrent (threadDelay)
-import           Control.Exception (try, catch, SomeException)
+import           Control.Exception (try, SomeException, bracket)
 import           Control.Monad (forever)
 import           Data.Aeson (decode)
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -131,9 +131,15 @@ sendOne m = do
          return False
      Right _ -> return True
 
-waitForEmail :: IO ()
-waitForEmail = do
-    conn <- S.connectPostgreSQL "host=127.0.0.1 dbname='mitro'"
+connectThenWaitForEmail :: IO ()
+connectThenWaitForEmail =
+    bracket
+        (S.connectPostgreSQL "host=127.0.0.1 dbname='mitro'")
+        S.close
+        waitForEmail
+
+waitForEmail :: S.Connection -> IO ()
+waitForEmail conn = do
     rows <- S.query_ conn "select id, type_string, arg_string from email_queue" :: IO [(Int, String, Maybe String)]
 
     -- Run this query to make sure we can access email_queue_sent -
@@ -163,4 +169,4 @@ waitForEmail = do
 
 main :: IO ()
 main = do
-    forever waitForEmail
+    forever connectThenWaitForEmail
