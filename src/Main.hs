@@ -38,7 +38,7 @@ data EmailType = INVITE
 
 data Message = Invite { messageTo :: M.Address, messageFrom :: String, messageUser :: String, token :: String }
              | VerifyAddress { messageTo :: M.Address, messageToken :: String, messageUser :: String }
-             | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String, messageUser :: String}
+             | NewDevice { messageTo :: M.Address, messageExtra :: String, messageToken :: String, messageUser :: String, maybeDeviceIP :: Maybe String}
              | IssueReported { messageTo :: M.Address }
              | OnboardFirstSecret { messageTo :: M.Address }
              deriving Show
@@ -102,8 +102,10 @@ parseMsg (_, type_, args) =
 decodeMessage :: (EmailType, [Maybe String]) -> Either String Message
 decodeMessage (VERIFY_ADDRESS, [Just address, Just token]) =
     Right (VerifyAddress (M.Address Nothing (T.pack address)) token address)
+decodeMessage (NEW_DEVICE, [Just address, Just args, Just token, Just deviceIP]) =
+    Right (NewDevice (M.Address Nothing (T.pack address)) args token address (Just deviceIP))
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
-    Right (NewDevice (M.Address Nothing (T.pack address)) args token address)
+    Right (NewDevice (M.Address Nothing (T.pack address)) args token address Nothing)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
     Right (OnboardFirstSecret (M.Address Nothing (T.pack address)))
 decodeMessage (INVITE, [Just fromAddress, Just toAddress, Just token]) =
