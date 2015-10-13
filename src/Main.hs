@@ -104,6 +104,8 @@ decodeMessage (VERIFY_ADDRESS, [Just address, Just token]) =
     Right (VerifyAddress (M.Address Nothing (T.pack address)) token address)
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token, Just deviceIP]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token address (Just deviceIP))
+decodeMessage (NEW_DEVICE, [Just address, Just args, Just token, Nothing]) =
+    Right (NewDevice (M.Address Nothing (T.pack address)) args token address Nothing)
 decodeMessage (NEW_DEVICE, [Just address, Just args, Just token]) =
     Right (NewDevice (M.Address Nothing (T.pack address)) args token address Nothing)
 decodeMessage (ONBOARD_FIRST_SECRET, [Nothing, Nothing, Nothing, Nothing, Just address]) =
