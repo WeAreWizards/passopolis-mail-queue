@@ -1,6 +1,10 @@
 Hi there,
-
-A new device contacted us. For additional safety we'd like you to confirm that this device really belongs to you by clicking the following link:
+#
+$maybe deviceIP <- maybeDeviceIP
+    A new device contacted us from the IP address #{deviceIP}.
+$nothing
+    A new device contacted us.
+\ For additional safety we'd like you to confirm that this device really belongs to you by clicking the following link:
 
 #{serverBase}/mitro-core/user/VerifyDevice?#{urlEncodeVars [("token", messageExtra), ("token_signature", messageToken), ("user", messageUser)]}
 
