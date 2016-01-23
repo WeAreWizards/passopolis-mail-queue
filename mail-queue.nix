@@ -13,4 +13,5 @@ mkDerivation {
     postgresql-simple random safe shakespeare smtp-mail text time
   ];
   license = stdenv.lib.licenses.gpl3;
+  enableSharedExecutables = false;
 }
