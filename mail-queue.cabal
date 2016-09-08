@@ -20,7 +20,7 @@ executable mail-queue
   ghc-options:         -Wall
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.8 && <4.9
+  build-depends:       base >=4.8 && <5.0
                      , smtp-mail >= 0.1.4.4
                      , bytestring
                      , mime-mail
